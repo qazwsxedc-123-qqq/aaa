@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>系统安全中心</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:#0d1117;color:#c9d1d9;
+ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+#scan{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:22px;padding:24px;transition:opacity .4s}
+h1{margin:0;font-size:clamp(15px,2.2vw,22px);font-weight:600;letter-spacing:3px;color:#58a6ff;text-align:center}
+.pct{font-size:clamp(48px,10vw,96px);font-weight:800;font-variant-numeric:tabular-nums;
+ background:linear-gradient(180deg,#fff,#58a6ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.bar{width:min(520px,82vw);height:10px;border-radius:6px;background:#161b22;overflow:hidden;border:1px solid #21262d}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#1f6feb,#58a6ff);transition:width .2s}
+#log{width:min(520px,82vw);height:140px;overflow:hidden;font:12px/1.75 ui-monospace,Consolas,monospace;color:#6e7681;text-align:left}
+#log div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#alert{position:fixed;inset:0;display:none;flex-direction:column;justify-content:center;align-items:center;gap:18px;padding:24px;background:#160506}
+#alert.on{display:flex}
+#alert h2{margin:0;font-size:clamp(21px,4.2vw,40px);color:#ff4d4f;letter-spacing:1px;text-align:center}
+#threats{width:min(620px,88vw);max-height:40vh;overflow:hidden;font:12px/1.95 ui-monospace,Consolas,monospace;color:#ff9a9a}
+#threats div{opacity:0;transform:translateY(6px);animation:in .3s forwards}
+@keyframes in{to{opacity:1;transform:none}}
+.fix{padding:14px 40px;border:0;border-radius:10px;background:#ff4d4f;color:#fff;font-size:17px;font-weight:700;
+ cursor:pointer;animation:pl 1s infinite}
+@keyframes pl{50%{transform:scale(1.06)}}
+#intr{position:fixed;inset:0;display:none;flex-direction:column;justify-content:center;align-items:center;gap:14px;
+ background:#000;text-align:center;padding:24px}
+#intr.on{display:flex;animation:bk .35s steps(1) infinite}
+@keyframes bk{50%{background:#2a0004}}
+#intr .big{font-size:clamp(28px,7vw,64px);font-weight:900;color:#ff2d2d;letter-spacing:2px}
+#intr .sub{color:#ffb3b3;font-size:clamp(14px,2vw,18px)}
+#count{font-size:clamp(56px,14vw,120px);font-weight:900;color:#fff;font-variant-numeric:tabular-nums}
+#joke{position:fixed;inset:0;display:none;flex-direction:column;justify-content:center;align-items:center;gap:18px;
+ background:radial-gradient(circle at 50% 30%,#182b3a,#070a0e);text-align:center;padding:24px}
+#joke.on{display:flex}
+#joke .emoji{font-size:clamp(60px,14vw,120px);animation:bo 1.1s infinite}
+@keyframes bo{50%{transform:translateY(-14px) rotate(6deg)}}
+#joke h2{margin:0;font-size:clamp(21px,4vw,34px);color:#7ee787}
+#joke p{margin:0;color:#8b949e;font-size:clamp(13px,1.8vw,16px);line-height:1.9}
+#joke a{color:#58a6ff;text-decoration:none}
+.hint{position:fixed;right:14px;bottom:10px;font-size:11px;opacity:.22;color:#8b949e}
+</style>
+</head>
+<body>
+<div id="scan">
+  <h1>系统安全中心 · 全盘扫描</h1>
+  <div class="pct"><span id="p">0</span>%</div>
+  <div class="bar"><i id="b"></i></div>
+  <div id="log"></div>
+</div>
+
+<div id="alert">
+  <h2>⚠ 检测到 47 个高危威胁</h2>
+  <div id="threats"></div>
+  <button class="fix" id="fix">立即清除</button>
+</div>
+
+<div id="intr">
+  <div class="big">系统已被入侵</div>
+  <div class="sub">正在上传本地文件…</div>
+  <div id="count">10</div>
+</div>
+
+<div id="joke">
+  <div class="emoji">😂</div>
+  <h2>骗你的，什么都没发生</h2>
+  <p>这只是一个本地 HTML 页面。<br>你的文件一个都没少，可以放心了。<br><a href="index.html">← 回到恶搞合集</a></p>
+</div>
+
+<script type="text/plain" id="data-paths">
+C:\Windows\System32\drivers\etc\hosts
+C:\Users\Public\Documents\report_2024.docx
+C:\Users\Public\Pictures\IMG_0421.jpg
+D:\Backup\photos.zip
+C:\Program Files\Common Files\cache\9f2a.tmp
+C:\Users\Public\AppData\Local\Temp\update_32.dll
+D:\games\save\profile.sav
+C:\Windows\Fonts\msyh.ttc
+C:\Users\Public\Desktop\密码.txt
+C:\Users\Public\Videos\VID_20231108.mp4
+</script>
+<script type="text/plain" id="data-threats">
+Trojan.Win32.AgentTesla —— svchostx.exe
+PUA.BundleInstaller —— setup.exe
+Ransom.LockBit.Gen —— photos.zip
+Spyware.KeyLogger.JS —— km.js
+Worm.AutoRun.C —— autorun.inf
+Backdoor.NetBus.17 —— nb17.dll
+</script>
+
+<div class="hint">Esc 退出</div>
+<script>
+(function(){
+  function lines(id){
+    var raw=document.getElementById(id).textContent;
+    return raw.split(String.fromCharCode(10)).filter(function(s){ return s.trim().length>0; });
+  }
+  var paths=lines('data-paths'), threats=lines('data-threats');
+  var p=document.getElementById('p'),b=document.getElementById('b'),log=document.getElementById('log');
+  var v=0;
+  var t1=setInterval(function(){
+    v+=Math.random()*4.6;
+    if(v>100) v=100;
+    p.textContent=Math.floor(v); b.style.width=v+'%';
+    if(Math.random()<0.55){
+      var d=document.createElement('div');
+      d.textContent='扫描中 › '+paths[Math.floor(Math.random()*paths.length)];
+      log.appendChild(d);
+      while(log.childNodes.length>7) log.removeChild(log.firstChild);
+    }
+    if(v>=100){ clearInterval(t1); setTimeout(toAlert,420); }
+  },110);
+
+  function toAlert(){
+    document.getElementById('scan').style.opacity='0';
+    setTimeout(function(){
+      document.getElementById('scan').style.display='none';
+      document.getElementById('alert').classList.add('on');
+      var box=document.getElementById('threats');
+      threats.forEach(function(t,i){
+        setTimeout(function(){
+          var d=document.createElement('div');
+          d.textContent='✖ '+t;
+          box.appendChild(d);
+        }, i*260);
+      });
+      setTimeout(goIntr, threats.length*260+2800);
+    },400);
+  }
+
+  function goIntr(){
+    document.getElementById('alert').classList.remove('on');
+    document.getElementById('intr').classList.add('on');
+    var n=10, c=document.getElementById('count'); c.textContent=n;
+    var t=setInterval(function(){
+      n--; c.textContent=n;
+      if(n<=0){ clearInterval(t); show(); }
+    },700);
+  }
+  function show(){
+    document.getElementById('intr').classList.remove('on');
+    document.getElementById('joke').classList.add('on');
+  }
+  document.getElementById('fix').addEventListener('click',goIntr);
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') location.href='index.html'; });
+})();
+</script>
+</body>
+</html>

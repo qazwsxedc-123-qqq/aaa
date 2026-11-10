@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>点我呀</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;-webkit-tap-highlight-color:transparent;
+ user-select:none;-webkit-user-select:none;
+ font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+body{animation:bg 3.2s linear infinite}
+@keyframes bg{
+ 0%{background:#ff2d55}17%{background:#ffd60a}33%{background:#34c759}
+ 50%{background:#0a84ff}67%{background:#bf5af2}83%{background:#ff9f0a}100%{background:#ff2d55}}
+#hud{position:fixed;left:0;right:0;top:0;padding:22px 18px;text-align:center;color:#fff;
+ font-size:clamp(15px,2.4vw,20px);font-weight:800;text-shadow:0 2px 12px rgba(0,0,0,.55);pointer-events:none}
+#hud b{font-variant-numeric:tabular-nums}
+.btn{position:fixed;padding:14px 30px;border-radius:999px;border:0;cursor:pointer;white-space:nowrap;
+ font-size:clamp(15px,2.2vw,19px);font-weight:800;color:#111;background:#fff;
+ box-shadow:0 10px 30px rgba(0,0,0,.35);transition:transform .12s}
+.btn:active{transform:scale(.94)}
+#win{position:fixed;left:50%;bottom:42px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;
+ transition:.35s;padding:13px 26px;border-radius:999px;background:rgba(0,0,0,.75);color:#fff;
+ text-decoration:none;font-size:15px;font-weight:700;border:1px solid rgba(255,255,255,.35)}
+#win.on{opacity:1;pointer-events:auto;transform:translateX(-50%)}
+.hint{position:fixed;right:12px;bottom:8px;font-size:11px;color:#fff;opacity:.35;z-index:99}
+</style>
+</head>
+<body>
+<div id="hud">你被耍了 <b id="n">0</b> 次</div>
+<a id="win" href="index.html">好吧，你赢了 →</a>
+<div class="hint">Esc 退出</div>
+<script>
+(function(){
+  var n=0,N=document.getElementById('n'),win=document.getElementById('win');
+  var ac=null, btns=[];
+  function blip(){
+    try{
+      if(!ac) ac=new (window.AudioContext||window.webkitAudioContext)();
+      var t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();
+      o.type='square';o.frequency.setValueAtTime(760+Math.random()*260,t);
+      g.gain.setValueAtTime(0.08,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.09);
+      o.connect(g).connect(ac.destination);o.start(t);o.stop(t+0.1);
+    }catch(e){}
+  }
+  var hover = window.matchMedia ? window.matchMedia('(hover:hover)').matches : true;
+  var words=['点我呀','再点一下','这里这里','快点我','别跑'];
+  function place(el){
+    var w=el.offsetWidth||150,h=el.offsetHeight||48;
+    var x=20+Math.random()*Math.max(1,innerWidth-w-40);
+    var y=100+Math.random()*Math.max(1,innerHeight-h-160);
+    el.style.left=x+'px';el.style.top=y+'px';
+  }
+  function spawn(){
+    var b=document.createElement('button');
+    b.className='btn';
+    b.textContent=words[Math.floor(Math.random()*words.length)];
+    document.body.appendChild(b);
+    place(b);
+    if(hover){
+      b.addEventListener('mouseenter',function(){ place(b); });
+    }
+    b.addEventListener('click',function(e){
+      e.preventDefault();
+      n++; N.textContent=n; blip();
+      if(n>=3 && btns.length<9) setTimeout(spawn,260);
+      place(b);
+      if(n>=12) win.classList.add('on');
+    });
+    btns.push(b);
+  }
+  spawn(); spawn();
+  setTimeout(function(){ win.classList.add('on'); },15000);
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') location.href='index.html'; });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SYSTEM FAILURE</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#07080a;color:#fff;
+ font-family:ui-monospace,Consolas,"Courier New",monospace;-webkit-tap-highlight-color:transparent}
+#gl{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;
+ gap:10px;text-align:center;padding:20px}
+h1{position:relative;margin:0;font-size:clamp(28px,7.4vw,84px);font-weight:900;letter-spacing:4px;color:#ff2d4b;
+ text-shadow:3px 0 #00e5ff,-3px 0 #ff00d4;animation:jit .18s infinite}
+@keyframes jit{
+ 0%{transform:translate(0,0)}25%{transform:translate(-3px,2px)}50%{transform:translate(2px,-2px)}
+ 75%{transform:translate(-2px,-1px)}100%{transform:translate(3px,1px)}}
+.sub{font-size:clamp(11px,1.6vw,15px);color:#7a7f8a;letter-spacing:2px}
+#err{font-size:clamp(10px,1.4vw,14px);color:#55606e;line-height:1.9;max-width:92vw;
+ word-break:break-all;height:130px;overflow:hidden;text-align:left}
+.tear{position:fixed;left:0;right:0;height:14vh;background:rgba(255,255,255,.05);
+ mix-blend-mode:screen;pointer-events:none;animation:tear 3.4s linear infinite}
+@keyframes tear{
+ 0%{transform:translateY(-30vh) skewX(0)}50%{transform:translateY(60vh) skewX(8deg)}
+ 100%{transform:translateY(130vh) skewX(-4deg)}}
+#scan{position:fixed;inset:0;pointer-events:none;
+ background:repeating-linear-gradient(0deg,rgba(0,0,0,.42) 0 1px,transparent 1px 3px)}
+#end{position:fixed;inset:0;display:none;flex-direction:column;justify-content:center;align-items:center;gap:16px;
+ background:radial-gradient(circle at 50% 35%,#14303f,#06090c);text-align:center;padding:24px}
+#end.on{display:flex}
+#end .e{font-size:clamp(56px,12vw,110px)}
+#end h2{margin:0;font-size:clamp(20px,3.6vw,32px)}
+#end p{margin:0;color:#8b949e;line-height:1.9;font-size:clamp(13px,1.8vw,16px)}
+#end a{color:#7ee787;text-decoration:none}
+.hint{position:fixed;right:12px;bottom:8px;font-size:11px;opacity:.2;z-index:9}
+</style>
+</head>
+<body>
+<div id="gl">
+  <h1>SYSTEM FAILURE</h1>
+  <div class="sub">KERNEL PANIC · 0x000000FF</div>
+  <div id="err"></div>
+</div>
+<div class="tear"></div>
+<div id="scan"></div>
+<div id="end">
+  <div class="e">😌</div>
+  <h2>别慌，你的电脑很好</h2>
+  <p>这只是一段 CSS 动画。<br>没有崩溃，没有重启，什么都没坏。<br><a href="index.html">← 回到恶搞合集</a></p>
+</div>
+<div class="hint">Esc 退出</div>
+<script>
+(function(){
+  var err=document.getElementById('err');
+  var pool=['0x000000FF','0xDEADBEEF','0x8BADF00D','0xC000021A','0x0000007B','0x0000001E'];
+  setInterval(function(){
+    var d=document.createElement('div');
+    var hex=Math.floor(Math.random()*0xfffffff).toString(16).toUpperCase();
+    d.textContent='['+new Date().toLocaleTimeString()+'] memory dump '+
+      pool[Math.floor(Math.random()*pool.length)]+' at 0x'+hex;
+    err.appendChild(d);
+    while(err.childNodes.length>7) err.removeChild(err.firstChild);
+  },260);
+  setTimeout(function(){ document.getElementById('end').classList.add('on'); },7000);
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') location.href='index.html'; });
+})();
+</script>
+</body>
+</html>

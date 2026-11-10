@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>照片</title>
+<style>
+html,body{margin:0;height:100%;background:#000;overflow:hidden;color:#fff;
+ font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+ -webkit-tap-highlight-color:transparent}
+#start{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;
+ gap:14px;cursor:pointer;text-align:center;padding:24px}
+#start h1{font-size:clamp(19px,3vw,28px);font-weight:500;letter-spacing:1px;margin:0}
+#start p{margin:0;color:#666;font-size:13px}
+#stage{position:fixed;inset:0;display:none;background:#000}
+#stage.on{display:block}
+#ghost{position:absolute;left:50%;top:50%;width:min(72vmin,560px);height:auto;
+ transform:translate(-50%,-50%) scale(0.2);opacity:0;
+ transition:transform .5s cubic-bezier(.2,1.3,.5,1), opacity .12s}
+#ghost.in{opacity:1;transform:translate(-50%,-50%) scale(1.15);animation:gsh .09s infinite}
+@keyframes gsh{
+ 0%{transform:translate(calc(-50% + 9px),calc(-50% - 7px)) scale(1.18) rotate(1.2deg)}
+ 50%{transform:translate(calc(-50% - 8px),calc(-50% + 6px)) scale(1.14) rotate(-1.4deg)}
+ 100%{transform:translate(calc(-50% + 7px),calc(-50% + 8px)) scale(1.19) rotate(.9deg)}}
+#noise{position:fixed;inset:0;opacity:.16;pointer-events:none;mix-blend-mode:screen;background-repeat:repeat}
+#vign{position:fixed;inset:0;pointer-events:none;
+ background:radial-gradient(circle at 50% 50%,transparent 26%,rgba(0,0,0,.93) 82%)}
+#end{position:fixed;inset:0;display:none;flex-direction:column;justify-content:center;align-items:center;gap:16px;
+ background:#0a0a0a;text-align:center;padding:24px}
+#end.on{display:flex}
+#end .e{font-size:clamp(56px,12vw,110px)}
+#end h2{margin:0;font-size:clamp(20px,3.6vw,32px)}
+#end a{color:#7ee787;text-decoration:none;font-size:15px}
+.flick{animation:fk .16s steps(2) infinite}
+@keyframes fk{50%{opacity:.55}}
+.hint{position:fixed;right:14px;bottom:10px;font-size:11px;opacity:.2;z-index:9}
+</style>
+</head>
+<body>
+<div id="start">
+  <h1>🖼 有人给你留了一张照片</h1>
+  <p>点击屏幕查看 · 保证不吓人（真的）</p>
+</div>
+
+<div id="stage">
+  <div id="noise"></div>
+  <svg id="ghost" viewBox="0 0 200 240" aria-hidden="true">
+    <defs>
+      <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f2f7fb"/><stop offset="1" stop-color="#9fb0bd"/>
+      </linearGradient>
+    </defs>
+    <path d="M100 8C53 8 26 46 26 96v136l20-16 18 16 18-16 18 16 18-16 18 16 18-16 20 16V96C174 46 147 8 100 8z" fill="url(#g1)"/>
+    <ellipse cx="70" cy="98" rx="15" ry="21" fill="#08090c"/>
+    <ellipse cx="130" cy="98" rx="15" ry="21" fill="#08090c"/>
+    <path d="M86 152q14-26 28 0z" fill="#08090c"/>
+  </svg>
+  <div id="vign"></div>
+</div>
+
+<div id="end">
+  <div class="e">😈</div>
+  <h2>吓到了吗？</h2>
+  <a href="index.html">← 回到恶搞合集</a>
+</div>
+
+<div class="hint">Esc 退出</div>
+<script>
+(function(){
+  var ac=null;
+  function actx(){
+    if(!ac){ try{ ac=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ ac=null; } }
+    return ac;
+  }
+  function heartbeat(){
+    var a=actx(); if(!a) return;
+    var t=a.currentTime;
+    for(var k=0;k<2;k++){
+      var o=a.createOscillator(),g=a.createGain();
+      o.type='sine';o.frequency.setValueAtTime(58,t+k*0.28);
+      o.frequency.exponentialRampToValueAtTime(32,t+k*0.28+0.2);
+      g.gain.setValueAtTime(0.0001,t+k*0.28);
+      g.gain.exponentialRampToValueAtTime(0.5,t+k*0.28+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+k*0.28+0.25);
+      o.connect(g).connect(a.destination);o.start(t+k*0.28);o.stop(t+k*0.28+0.3);
+    }
+  }
+  function scream(){
+    var a=actx(); if(!a) return;
+    var t=a.currentTime;
+    var len=Math.floor(a.sampleRate*1.5);
+    var buf=a.createBuffer(1,len,a.sampleRate),d=buf.getChannelData(0);
+    for(var i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,1.4);
+    var s=a.createBufferSource();s.buffer=buf;
+    var bp=a.createBiquadFilter();bp.type='bandpass';bp.frequency.value=1600;bp.Q.value=0.7;
+    var g=a.createGain();
+    g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.6,t+0.04);
+    g.gain.exponentialRampToValueAtTime(0.001,t+1.4);
+    s.connect(bp).connect(g).connect(a.destination);s.start(t);
+    var o=a.createOscillator(),g2=a.createGain();
+    o.type='sawtooth';o.frequency.setValueAtTime(950,t);
+    o.frequency.exponentialRampToValueAtTime(130,t+1.3);
+    g2.gain.setValueAtTime(0.16,t);g2.gain.exponentialRampToValueAtTime(0.001,t+1.35);
+    o.connect(g2).connect(a.destination);o.start(t);o.stop(t+1.4);
+  }
+  (function(){
+    var c=document.createElement('canvas');c.width=c.height=96;
+    var x=c.getContext('2d'),im=x.createImageData(96,96);
+    for(var i=0;i<im.data.length;i+=4){
+      var v=Math.random()*255;
+      im.data[i]=v;im.data[i+1]=v;im.data[i+2]=v;im.data[i+3]=46;
+    }
+    x.putImageData(im,0,0);
+    document.getElementById('noise').style.backgroundImage='url('+c.toDataURL()+')';
+  })();
+
+  var started=false;
+  function go(){
+    if(started) return; started=true;
+    document.getElementById('start').style.display='none';
+    document.getElementById('stage').classList.add('on');
+    var e=document.documentElement;
+    if(e.requestFullscreen) e.requestFullscreen().catch(function(){});
+    actx(); heartbeat();
+    var hb=setInterval(heartbeat,1300);
+    setTimeout(function(){
+      var gh=document.getElementById('ghost');
+      gh.classList.add('in');
+      gh.classList.add('flick');
+      scream();
+      clearInterval(hb);
+      setTimeout(function(){ document.getElementById('end').classList.add('on'); },1900);
+    }, 2600);
+  }
+  document.getElementById('start').addEventListener('click',go);
+  document.getElementById('start').addEventListener('touchstart',function(e){ e.preventDefault(); go(); },{passive:false});
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') location.href='index.html'; });
+})();
+</script>
+</body>
+</html>

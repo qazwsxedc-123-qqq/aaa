@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title> </title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#0b0f14;
+ font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+ -webkit-tap-highlight-color:transparent}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none}
+#txt{position:fixed;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;color:#fff;
+ font-size:clamp(18px,3.4vw,34px);font-weight:800;letter-spacing:1px;padding:0 20px;
+ text-shadow:0 2px 24px #000,0 0 2px #000;opacity:0;transition:opacity .5s;pointer-events:none}
+.shake{animation:sh .42s cubic-bezier(.36,.07,.19,.97) both}
+@keyframes sh{
+ 10%,90%{transform:translate(-2px,1px) rotate(-.3deg)}
+ 20%,80%{transform:translate(4px,-2px) rotate(.4deg)}
+ 30%,50%,70%{transform:translate(-6px,2px) rotate(-.6deg)}
+ 40%,60%{transform:translate(6px,-1px) rotate(.6deg)}}
+.hint{position:fixed;right:14px;bottom:10px;font-size:11px;color:#fff;opacity:.18}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="txt"></div>
+<div id="flash"></div>
+<div class="hint">Esc 退出</div>
+<script>
+(function(){
+  var cv=document.getElementById('c'),ctx=cv.getContext('2d');
+  var W=0,H=0,segs=[],clicks=0,snd=null;
+  function resize(){
+    var dpr=Math.min(window.devicePixelRatio||1,2);
+    W=window.innerWidth;H=window.innerHeight;
+    cv.width=Math.floor(W*dpr);cv.height=Math.floor(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    draw();
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(var i=0;i<segs.length;i++){
+      var s=segs[i];
+      ctx.beginPath();
+      ctx.moveTo(s.x1+1.6,s.y1+1.6);ctx.lineTo(s.x2+1.6,s.y2+1.6);
+      ctx.strokeStyle='rgba(0,0,0,'+(s.al*0.75)+')';
+      ctx.lineWidth=s.w;ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(s.x1,s.y1);ctx.lineTo(s.x2,s.y2);
+      ctx.strokeStyle='rgba(255,255,255,'+s.al+')';
+      ctx.lineWidth=s.w*0.7;ctx.stroke();
+    }
+  }
+  function grow(x,y,a,len,w,d){
+    if(len<7||w<0.4||d>9) return;
+    var nx=x+Math.cos(a)*len, ny=y+Math.sin(a)*len;
+    segs.push({x1:x,y1:y,x2:nx,y2:ny,w:w,al:0.4+Math.random()*0.5});
+    grow(nx,ny,a+(Math.random()-0.5)*0.75,len*(0.52+Math.random()*0.3),w*0.74,d+1);
+    if(Math.random()<0.6) grow(nx,ny,a+(Math.random()<0.5?-1:1)*(0.4+Math.random()*0.9),len*0.55,w*0.55,d+1);
+  }
+  function hit(x,y){
+    var n=15+Math.floor(Math.random()*10);
+    for(var i=0;i<n;i++) grow(x,y,Math.random()*Math.PI*2,50+Math.random()*150,3.2,0);
+    draw();
+  }
+  function boom(){
+    try{
+      if(!snd) snd=new (window.AudioContext||window.webkitAudioContext)();
+      var ac=snd, t=ac.currentTime;
+      var o=ac.createOscillator(),g=ac.createGain();
+      o.type='triangle';o.frequency.setValueAtTime(170,t);
+      o.frequency.exponentialRampToValueAtTime(40,t+0.28);
+      g.gain.setValueAtTime(0.35,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+      o.connect(g).connect(ac.destination);o.start(t);o.stop(t+0.42);
+      var len=Math.floor(ac.sampleRate*0.18);
+      var buf=ac.createBuffer(1,len,ac.sampleRate),d=buf.getChannelData(0);
+      for(var i=0;i<len;i++){ d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2); }
+      var s=ac.createBufferSource();s.buffer=buf;
+      var f=ac.createBiquadFilter();f.type='highpass';f.frequency.value=2200;
+      var g2=ac.createGain();g2.gain.value=0.3;
+      s.connect(f).connect(g2).connect(ac.destination);s.start(t);
+    }catch(e){}
+  }
+  function flash(){
+    var el=document.getElementById('flash');
+    el.style.transition='none';el.style.opacity='0.85';
+    requestAnimationFrame(function(){ el.style.transition='opacity .5s ease-out'; el.style.opacity='0'; });
+  }
+  function shake(){
+    var b=document.body;
+    b.classList.remove('shake');
+    void b.offsetWidth;
+    b.classList.add('shake');
+  }
+  var TXT=['','屏幕碎了…','','','','别点了，真的碎了','','','再点就保外了','','快停手！'];
+  function onHit(x,y){
+    clicks++;
+    hit(x,y);flash();shake();boom();
+    var t=document.getElementById('txt');
+    var m=TXT[Math.min(clicks,TXT.length-1)]||'';
+    if(m){ t.textContent=m; t.style.opacity='1'; setTimeout(function(){ t.style.opacity='0'; },1400); }
+  }
+  window.addEventListener('resize',resize);
+  window.addEventListener('pointerdown',function(e){
+    if(e.target && e.target.className==='hint') return;
+    onHit(e.clientX,e.clientY);
+  });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') location.href='index.html'; });
+  resize();
+  setTimeout(function(){ onHit(W*0.5,H*0.42); },900);
+})();
+</script>
+</body>
+</html>

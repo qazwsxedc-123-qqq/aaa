@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>连接中…</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:#05080a;color:#22ff88;display:flex;gap:16px;padding:clamp(12px,2.4vw,26px);
+ font-family:ui-monospace,Consolas,"Courier New",monospace;-webkit-tap-highlight-color:transparent}
+#log{flex:1 1 60%;overflow:hidden;font-size:clamp(11px,1.5vw,14px);line-height:1.8;
+ text-shadow:0 0 8px rgba(34,255,136,.45)}
+#log div{white-space:pre-wrap;word-break:break-all;opacity:0;animation:fi .18s forwards}
+@keyframes fi{to{opacity:1}}
+.warn{color:#ffd166;text-shadow:0 0 8px rgba(255,209,102,.4)}
+.bad{color:#ff4d5e;text-shadow:0 0 8px rgba(255,77,94,.45)}
+#cam{flex:0 0 34%;max-width:380px;display:flex;flex-direction:column;gap:8px;align-self:flex-start}
+#cam .box{position:relative;aspect-ratio:4/3;background:#000;border:1px solid #12402a;overflow:hidden}
+#static{width:100%;height:100%;display:block}
+#rec{position:absolute;left:8px;top:7px;font-size:11px;color:#ff4d5e;display:none;align-items:center;gap:6px}
+#rec.on{display:flex}
+#rec i{width:7px;height:7px;border-radius:50%;background:#ff4d5e;animation:bl .9s steps(1) infinite}
+@keyframes bl{50%{opacity:0}}
+#cam .cap{font-size:11px;color:#2f7a52;text-align:center}
+@media(max-width:760px){
+  body{flex-direction:column;gap:10px}
+  #cam{flex:0 0 auto;max-width:none;flex-direction:row;align-items:center}
+  #cam .box{width:38vw}
+  #log{flex:1 1 auto}
+}
+.hint{position:fixed;right:12px;bottom:8px;font-size:11px;opacity:.2;color:#22ff88}
+</style>
+</head>
+<body>
+<div id="log"></div>
+<div id="cam">
+  <div class="box">
+    <canvas id="static" width="160" height="120"></canvas>
+    <div id="rec"><i></i>REC</div>
+  </div>
+  <div class="cap" id="cap">前置摄像头 · 未连接</div>
+</div>
+
+<script type="text/plain" id="data-lines">
+[init] 建立加密隧道 .................. OK
+[init] 目标主机 HOST_TARGET 已响应
+[scan] 开放端口 22 / 80 / 443 / 3389
+[exploit] 载荷注入 ................... OK
+[priv] 提权成功，当前权限 root
+[read] 通讯录 1,284 条 .............. 已下载
+[read] 相册 3,917 张 ................ 已下载
+[read] 浏览记录 24,006 条 ........... 已下载
+[read] 微信聊天记录 8,332 条 ........ 已下载
+[cam] 正在开启前置摄像头 ............ CONNECTED
+</script>
+
+<div class="hint">Esc 退出</div>
+<script>
+(function(){
+  function lines(id){
+    var raw=document.getElementById(id).textContent;
+    return raw.split(String.fromCharCode(10)).filter(function(s){ return s.trim().length>0; });
+  }
+  var lines2=lines('data-lines');
+  var log=document.getElementById('log');
+  var cv=document.getElementById('static'),cx=cv.getContext('2d');
+  var rec=document.getElementById('rec'),cap=document.getElementById('cap');
+  var W=cv.width,H=cv.height,img=cx.createImageData(W,H),on=false;
+  function noise(){
+    if(!on) return;
+    var d=img.data;
+    for(var i=0;i<d.length;i+=4){
+      var v=Math.random()*255|0;
+      d[i]=v;d[i+1]=v;d[i+2]=v;d[i+3]=255;
+    }
+    cx.putImageData(img,0,0);
+    requestAnimationFrame(noise);
+  }
+  function startCam(){
+    rec.classList.add('on');
+    cap.textContent='前置摄像头 · 已连接';
+    cap.style.color='#ff4d5e';
+    on=true;noise();
+  }
+  function push(text,cls){
+    var d=document.createElement('div');
+    if(cls) d.className=cls;
+    d.textContent=text;
+    log.appendChild(d);
+    while(log.childNodes.length>24) log.removeChild(log.firstChild);
+  }
+  var i=0;
+  function next(){
+    if(i>=lines2.length){ setTimeout(finish,900); return; }
+    var t=lines2[i++];
+    t=t.replace('HOST_TARGET','192.168.'+(1+Math.floor(Math.random()*3))+'.'+(2+Math.floor(Math.random()*250)));
+    var cls='';
+    if(t.indexOf('[cam]')===0) cls='bad';
+    else if(t.indexOf('[exploit]')===0||t.indexOf('[priv]')===0||t.indexOf('[read]')===0) cls='warn';
+    push(t,cls);
+    if(t.indexOf('CONNECTED')>=0) startCam();
+    setTimeout(next, 240+Math.random()*300);
+  }
+  function finish(){
+    push('>>> 你已经被我看到了 😈','bad');
+    setTimeout(function(){
+      push('>>> ……开玩笑的。这只是个本地网页，什么都没做，摄像头也没开。');
+      var a=document.createElement('div');
+      var link=document.createElement('a');
+      link.href='index.html';
+      link.style.color='#7ee787';
+      link.textContent='[ 返回恶搞合集 ]';
+      a.appendChild(link);
+      log.appendChild(a);
+    },1800);
+  }
+  setTimeout(next,700);
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') location.href='index.html'; });
+})();
+</script>
+</body>
+</html>

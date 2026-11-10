@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>:(</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#0078d7;color:#fff;
+ font-family:"Segoe UI",system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+ -webkit-tap-highlight-color:transparent}
+.wrap{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:center;
+ padding:0 clamp(24px,9vw,140px);gap:clamp(14px,2.4vh,30px)}
+.face{font-size:clamp(72px,14vw,150px);line-height:1;font-family:"Segoe UI",sans-serif}
+.msg{font-size:clamp(18px,2.9vw,32px);line-height:1.45;max-width:32ch}
+.pct{font-size:clamp(15px,2vw,22px);font-variant-numeric:tabular-nums;opacity:.95}
+.bar{width:min(360px,60vw);height:7px;background:rgba(255,255,255,.22);border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:#fff;transition:width .35s linear}
+.light{font-size:clamp(12px,1.5vw,16px);line-height:1.6;opacity:.9}
+.light a{color:#fff}
+.hint{position:fixed;right:14px;bottom:10px;font-size:11px;opacity:.22}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="face">:(</div>
+  <div class="msg">你的电脑遇到问题，需要重新启动。我们只收集某些错误信息，然后为你重新启动。</div>
+  <div class="pct"><b id="pct">0</b>% 完成</div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="light">有关此问题的详细信息和可能的解决方法，请访问 <a href="#" onclick="return false">https://www.windows.com/stopcode</a></div>
+  <div class="light" id="code">终止代码: CRITICAL_PROCESS_DIED</div>
+</div>
+<div class="hint">Esc 退出</div>
+<script>
+(function(){
+  var codes=['CRITICAL_PROCESS_DIED','SYSTEM_THREAD_EXCEPTION_NOT_HANDLED','MEMORY_MANAGEMENT',
+  'IRQL_NOT_LESS_OR_EQUAL','KERNEL_SECURITY_CHECK_FAILURE','PAGE_FAULT_IN_NONPAGED_AREA',
+  'BAD_SYSTEM_CONFIG_INFO','UNEXPECTED_STORE_EXCEPTION'];
+  var pct=document.getElementById('pct'),bar=document.getElementById('bar'),code=document.getElementById('code');
+  var p=0,ci=0;
+  function step(){
+    p+=1+Math.random()*7;
+    if(p>=100){ p=0; ci=(ci+1)%codes.length; code.textContent='终止代码: '+codes[ci]; }
+    var v=Math.floor(p);
+    pct.textContent=v; bar.style.width=v+'%';
+    setTimeout(step, 220+Math.random()*420);
+  }
+  setTimeout(step,600);
+  function fs(){
+    var e=document.documentElement;
+    if(!document.fullscreenElement && e.requestFullscreen){ e.requestFullscreen().catch(function(){}); }
+  }
+  document.addEventListener('click',fs);
+  document.addEventListener('touchstart',fs,{passive:true});
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') location.href='index.html'; });
+})();
+</script>
+</body>
+</html>
